@@ -1,0 +1,26 @@
+{
+  "name": "crowdsource",
+  "version": "1.0.0",
+  "description": "crowdsourcing tool for sncf",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "author": "Zhoutong Wang",
+  "license": "ISC"
+  ,
+  "dependencies": {
+    "body-parser": "^1.14.1",
+    "cors": "^2.7.1",
+    "express-session": "1.11.3",
+    "express": "^4.13.3",
+    "cookie-parser": "1.4.0",
+    "emailjs": "^1.0.4",
+    "errorhandler": "1.4.2",
+    "jade": "1.11.0",
+    "moment": "2.10.3",
+    "pg": "^6.1.4",
+    "stylus": "0.52.4",
+    "express-device": "0.4.2"
+  }
+}
