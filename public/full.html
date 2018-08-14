@@ -22,16 +22,57 @@
         font-family: 'Amaranth', sans-serif;
     }
 
+    /*increase the max-width of each level*/
+    .input-block-level{
+        width: 85%;
+    }
     .map{
 
     }
 
-    .controlled_img{
+    .img_container{
+        padding: 15px;
+        height: 100%;
+        display: -webkit-inline-box;
+    }
+
+    .test_img{
+        box-shadow: 0 14px 28px rgba(0,0,0,0.25), 0 10px 10px rgba(0,0,0,0.22);
+        cursor: pointer;
+        transition: all 0.3s cubic-bezier(.25,.8,.25,1);
+        opacity: 1;
+        height: 100%
+    }
+
+    .test_img:hover{
+        border: 4px solid #222;
+    }
+
+    #top_sec{
+        align-items: center;
+        display: block;
+    }
+
+    #middle_sec{
+        align-items: center;
+        display: flex;
+
+    }
+
+    #bottom_sec{
+        align-items: center;
+        display: block;
+    }
+
+    #controlled_img{
         outline: none;
         border-color: #9ecaed;
         box-shadow: 0 0 50px #9ecaed;
+        box-shadow: 0 14px 28px rgba(0,0,0,0.25), 0 10px 10px rgba(0,0,0,0.22);
+        transition: all 0.3s cubic-bezier(.25,.8,.25,1);
+        opacity: 1;
+        height: 100%;
     }
-
 
     .cat_img{
         width: 40%;
@@ -43,12 +84,6 @@
         box-shadow: 0 1px 3px rgba(0,0,0,0.12), 0 1px 2px rgba(0,0,0,0.24); 
         transition: all 0.3s cubic-bezier(.25,.8,.25,1);
         margin: 0 10px;
-    }
-
-    .cat_img:hover {
-        box-shadow: 0 14px 28px rgba(0,0,0,0.25), 0 10px 10px rgba(0,0,0,0.22);
-        cursor: pointer;
-        opacity: 1;
     }
 
     #equal_sign{
@@ -168,33 +203,28 @@
     .mark_img:hover{
         cursor: crosshair;
     }
+
+    #middle_left{
+        height: 100%
+    }
 </style>
 
 <body>
 
-    <div class="navigation" style="top: 0; background-color: #333; display: table-cell; width: 100vw; vertical-align: middle; padding: 10px; height: 10vh">
+    <div class="navigation" style="top: 0; display: table-cell; width: 100vw; vertical-align: middle; padding: 10px; height: 10vh">
         <div class="row" style="display: inline-flex;">
-            <h5 style="color: #eee; margin-left: 50px;"> SNCF <strong>Spatial Legibility Survey</strong> </h5>
+            <h5 style="color: #333; margin-left: 50px;"> SNCF <strong>Spatial Legibility Survey</strong> </h5>
         </div>
         <img src="./images/scl.png" style="height: 60%;margin: 0 20px; float: right;"></img>        
     </div>
     <div class="container" style="width: 100%; height: 80vh;">
-        <div class="row" style=" padding: 10px 0; height: 10%; ">
-            <div class="col" id="top_sec" style="text-align: center; vertical-align: middle; display: table-cell;">
-            </div>
-        </div>
         
-        <div class="row" id="middle_sec" style="bottom: 0px; text-align: center;  padding: 50px 0; height: 80%">
-        </div>
-
-        <div class="row" id="bottom_sec" style="bottom: 0px; text-align: center; height: 10%;">
-        </div>
     </div>
 
-    <div id = "bottom_navigation" class="row" style="bottom: 0px; text-align: center; height: 10vh; position: absolute; width: 100%; align-items: center; display: flex">
-        <div class="progress" style="width:80%; transform: translateX(-50%); left: 50%; position: relative;">
+    <div id = "bottom_navigation" class="row" style="bottom: 0px; height: 10vh; width: 100vw; align-items: center; display: flex; margin: 0">
+        <div class="progress" style="bottom: 0; width:100%; transform: translateX(-50%); left: 50%; position: absolute;">
             <div style="width:100%">
-                <div class="progress-bar bg-dark progress-bar-striped progress-bar-animated" id="progress_survey" role="progressbar"
+                <div class="progress-bar bg-dark" id="progress_survey" role="progressbar"
                 aria-valuenow="0" aria-valuemin="0" aria-valuemax="100" style="width:0%">
                 0%
                 </div>
@@ -209,12 +239,35 @@
         var coordinate = [];
         var properties_col = [];
 
-        var original_img_path
-        var false_img_path  
-        var true_img_path   
-        var true_category   
-        var false_category
-        var decision 
+        var img_id_a_0 = ''
+        var img_id_a_1 = ''
+        var img_id_b   = ''
+        var img_id_c   = ''
+        var category_a = ''
+        var category_b = ''
+        var category_c = ''
+        var decision
+        var final_result = []
+
+        function shuffle(array) {
+            var currentIndex = array.length, temporaryValue, randomIndex;
+
+            // While there remain elements to shuffle...
+            while (0 !== currentIndex) {
+
+            // Pick a remaining element...
+            randomIndex = Math.floor(Math.random() * currentIndex);
+            currentIndex -= 1;
+
+            // And swap it with the current element.
+            temporaryValue = array[currentIndex];
+            array[currentIndex] = array[randomIndex];
+            array[randomIndex] = temporaryValue;
+            }
+
+            return array;
+        }
+
 
         function add_progress_bar(count){
             $("#progress_survey").width(count * 5 + '%')
@@ -240,101 +293,97 @@
         function load_images(){
             // alert(data);
             // alert(videos_json['videos'][data.toString()]);
-            $("#middle_sec").empty();
             $("#top_sec").empty()
-            progress_count += 1
-            add_progress_bar(progress_count)
+            $("#middle_sec").empty();
+            $("#bottom_sec").empty()
+            progress_count += 2;
+            add_progress_bar(progress_count);
+            $(".container").empty();
+
             $.get("/getImages").done(function(data){
                 data = JSON.parse(data)
-                original_img_path  = data['original_img_path'];
-                false_img_path     = data['false_img_path'];
-                true_img_path      = data['true_img_path'];
-                true_category   = data['true_category'];
-                false_category  = data['false_category'];
-                survey_total_count = data['count']
-                $("#top_sec").append(`<h5>Mission: <strong>${survey_total_count}</strong> / 50000</h5>`);
+
+                // initiate 
+                img_id_a_0  = data['img_id_a_0'];
+                img_id_a_1  = data['img_id_a_1'];
+                img_id_b    = data['img_id_b'];
+                img_id_c    = data['img_id_c'];
+                category_a  = data['category_a'];
+                category_b  = data['category_b'];
+                category_c  = data['category_c'];
+                survey_total_count = data['count'];
+
+                // generate the order of three experimental images
+                var img_order = ['a', 'b', 'c'];
+                img_order = shuffle(img_order);
+
+
+                $(".container").append(`<div class="row" id="top_sec" style="text-align: center; height: 45%; ">
+                    </div>
+                    
+                    <div class="row" id="middle_sec" style="text-align: center; height: 10%">
+                    </div>
+
+                    <div class="row" id="bottom_sec" style="text-align: center; height: 45%;">
+                    </div>`
+                )
+
+                // append all sectors by image links received
+                $("#top_sec").append(`<div class="img_container"><img id="controlled_img" src="./images/lazare/` + category_a + `/` + img_id_a_0 + `.png"/></div> `);
                 $("#middle_sec").append(`
-                    <div class="col-4 option" style="align-items: center; display: flex;">
-                        <img class="controlled_img" id="" style="width: 100%" src="./images/lazare/`
-                        + true_category + `/` + original_img_path +
-                        `.png"/>
-                    </div>
-                    <div class="col-1 option" style="align-items: center; display:flex">
-                        <img style="width:100%;" src="./images/arrow.png"></img>
-                    </div>
-                    <div class="col-7 option" style="border: 3px dashed; width: 100%; height: 100%">
-
-                        <div class="row" style="height:20%; align-items: center; justify-content: center; ">
-                            <h5 style="font-size: 1.2rem; margin: 0.5rem 0 0 0;"> <strong>Which Image </strong> is from the Same Space as the Left?
-                            </h5>
-                        </div>
-
-                        <div class="row" style="height:80%; vertical-align:middle; padding: 10px 25px 25px 25px;">
-                            <div class="row" id="img_container" style="height:100%; width: 100%; margin: unset; display: inline;">
-                            </div>
-                        </div>
-                    </div>
+                    <h4 style="    position: relative; transform: translateX(-50%); left: 50%;">Which of the images below is the most similar to the one above? </h4>
                 `)
 
-                var random_boolean = Math.random() >= 0.5;
-                if (random_boolean){
-                    $('#img_container').append(`
-                        <img class="cat_img" id="left_image" style="" src="./images/lazare/`
-                        + true_category + `/` + true_img_path +
-                        `.png">
-                        </img>
 
-                        <img class="cat_img" id="right_image" style="" src="./images/lazare/`
-                        + false_category + `/` + false_img_path +
-                        `.png"/>
+                for (var i = 0; i < img_order.length; i++) {
+                    $('#bottom_sec').append(`
+                        <div class="img_container">
+                            <img class="test_img" id="left_image" style="" value="` + img_order[i] + `" src="./images/lazare/`
+                            + eval('category_' + img_order[i]) + `/` + eval('img_id_' + img_order[i].replace("a", "a_1")) +
+                            `.png">
+                            </img>
+                        </div>
                     `)
                 }
-                else{
-                    $('#img_container').append(`
-                        <img class="cat_img" id="left_image" style="" src="./images/lazare/`
-                        + false_category + `/` + false_img_path +
-                        `.png">
-                        </img>
 
-                        <img class="cat_img" id="right_image" style="" src="./images/lazare/`
-                        + true_category + `/` + true_img_path +
-                        `.png"/>
-                    `)
-                };
+                $(".test_img").click(function(){
+                    select_category = $(this).attr('value');
+                    $(".test_img").css('opacity', '0.5');
+                    $(".test_img").css('pointer-events', 'none');
+                    $(this).css('opacity', '1')
+                    link_original = `./images/lazare/` + category_a + `/` + img_id_a_0 + `.png`;
+                    link_selected = `./images/lazare/`
+                            + eval('category_' + $(this).attr('value')) + `/` + eval('img_id_' + $(this).attr('value').replace("a", "a_1")) + `.png`;
 
-                $("#top_sec").empty()
-                $("#top_sec").append(``)
-
-                $("#left_image").click(function(){
-                    load_drawing(true, random_boolean);
-                    // upload_result('left');
-                })
-
-                $("#right_image").click(function(){
-                    load_drawing(false, random_boolean)
-                    // upload_result('right');
-                })
+                    setTimeout(function(){load_drawing(select_category, link_original, link_selected)}, 2000)
+                })          
             })
         }
 
-        function load_drawing(direction, random_boolean){ 
-            progress_count += 1
+        function load_drawing(select_category, link_original, link_selected){ 
+            progress_count += 2
             add_progress_bar(progress_count)
 
-            if (direction == random_boolean){
-                decision = true
-                var link = true_category + `/` + true_img_path
-            }
-            else{
-                decision = false
-                var link = false_category + `/` + false_img_path
-            }
+            $(".container").empty();
 
-            $("#middle_sec").empty();
-            $("#middle_sec").append(`<div class="col-6" id="middle_sec_left"style="background-color: #ffffff; padding-left: 0;box-shadow: inset 1px -1px 1px #ffffff, inset -1px 1px 1px #ffffff;">
-                    
+            $(".container").append(`
+                <div class="row" id="top_sec" style="text-align: left; height: 30%; padding: 0 10vw;">
                 </div>
-                <div class="col-6" style="background-color: #fffff;box-shadow: inset 1px -1px 1px #ffffff, inset -1px 1px 1px #ffffff;">
+
+                <div class="row" id="middle_sec" style="text-align: center; height: 60%; padding: 0 10vw;">
+                    <div class="col-lg-6 col-md-8" id="middle_left" >
+                    </div>
+                    <div class="col-lg-6 col-md-4" id="middle_right" style="height:100%;"></div>
+                </div>
+                <div class="row" id="bottom_sec" style="text-align: center; height: 10%; padding: 0 10vw;">
+                </div>`
+            )
+
+            $("#top_sec").append(`<div class="img_container"><img id="controlled_img" src="` + link_original + `"/> </div> <p style="color:grey; display:contents">The Left Image is the Controlled Image</p>`)
+            $("#middle_left").append(`<div class="img_container" style="padding: 0; float: left;"><img id="choose_image"  style=" height: 100%; cursor: crosshair;" src="` + link_selected + `"/></div>`)
+
+            $("#middle_right").append(`
+                <div class="col-12" style="background-color: #fffff;box-shadow: inset 1px -1px 1px #ffffff, inset -1px 1px 1px #ffffff; height: 100%; float: right;">
                     <div class="row" style ="height:20%">
                         <div class="col-12" id="middle_sec_right" style="background-color: #ffffff; box-shadow: inset 1px -1px 1px #ffffff, inset -1px 1px 1px #ffffff";>
                         </div>                      
@@ -355,14 +404,22 @@
                         <div class="col-12" id="middle_sec_right3" style="background-color: #ffffff; box-shadow: inset 1px -1px 1px #ffffff, inset -1px 1px 1px #ffffff;vertical-align: bottom ">                           
                         </div>                      
                     </div>
-                </div>`)
+                </div>
+            `)
+            $('#middle_sec_right').append(`<h4 style="position: relative; transform: translateX(-50%); left: 50%;">Click on the 3 things that led you to choose the image? </h4><p style="color:grey"> Please Ignore People</p>`)
+
+            // $("#middle_sec").append(`<div class="col-6" id="middle_sec_left"style="background-color: #ffffff; padding-left: 0;box-shadow: inset 1px -1px 1px #ffffff, inset -1px 1px 1px #ffffff;">
+                    
+            //     </div>
+            //     `)
 
             coordinate.length = 0
             $("#middle_sec_left").empty();
-            $("#middle_sec_left").append(
-                `<img class="mark_img" id="choose_image" style="float: left;postion:relative" src="./images/lazare/` + link + `.png"></img>`
-            )
-            $("#middle_sec_right").append(`<h5 style="font-family: Sans-serif; font-size: 15"> Please Mark<strong> 3 </strong>Places Helping with Your Choice <strong>on </strong> the Picture and Choose Reasons </h5>`)
+
+            // $("#middle_sec_left").append(
+            //     `<img class="mark_img" id="choose_image" style="float: left;postion:relative" src="./images/lazare/` + link + `.png"></img>`
+            // )
+
             var count = 0;
             var name = 0
 
@@ -371,12 +428,13 @@
             //get pixel, append marker, properties button showup    
                 if (count <=2){
                     //absolute x,y postion to show marker
-                    var x = myclick.offsetX -15 //relative x,y postion to the image
-                    var y = myclick.offsetY -15
+                    var x = myclick.offsetX //relative x,y postion to the image
+                    var y = myclick.offsetY - 20
                     // var  x = (myclick.pageX - this.offsetLeft);
                     // var  y = (myclick.pageY - this.offsetTop)-15 ;
-                    $("#middle_sec_left").append(`<img class="mark" src="./images/circle.png" id="mark${count}" style="background: transparent;position:absolute;left:${x}px; top:${y}px; z-index:2;">`);                       
-                    var height = $(`#middle_sec_left`).height()
+                    $("#middle_left").append(`<img class="mark" height="40" width="40" src="./images/${count+1}.png" id="mark${count}" style="background: transparent;position:absolute;left:${x}px; top:${y}px; z-index:2;">`);
+
+                    var height = $(`#middle_left`).height()
                     var x_relative_Position = myclick.offsetX  //relative x,y postion to the image
                     var y_relative_Position = myclick.offsetY
                     // var index_num = count.toString()
@@ -390,13 +448,14 @@
                         <div class="ui selection dropdown" id="drop_button${count}" style="min-width:0;width:100%">
                           <input type="hidden" name="gender">
                           <i class="dropdown icon"></i>
-                          <div class="default text">Properties</div>
+                          <div class="default text">Area <strong> ${count + 1} </strong> Properties</div>
                           <div class="menu">
                             <div class="item" data-value="object">Object</div>
                             <div class="item" data-value="light">Light</div>
-                            <div class="item" data-value="color_temperature">Color Temperature</div>
-                            <div class="item" data-value="texture">Texture</div>
-                            <div class="item" data-value="others">Others</div>
+                            <div class="item" data-value="color">Color</div>
+                            <div class="item" data-value="material">Material</div>
+                            <div class="item" data-value="geometry">Geometry</div>
+                            <div class="item" data-value="other">Other</div>
                           </div>
                         </div>`)                    
                     
@@ -419,8 +478,8 @@
                                                 
                 // }
                 var check_continue = document.getElementById("continue_to_option")     
-                if (count === 3 && check_continue===null){$("#middle_sec_right3").append(`<button class="btn btn-light btn-lg" id="continue_to_option" style="width: 45%; float: left">Continue</button>
-                    <button class="btn btn-danger btn-lg" id="retry_to_option" style="width: 45%; float: right">Redo</button>`)
+                if (count === 3 && check_continue===null){$("#middle_sec_right3").append(`<button class="btn btn-dark btn-lg" id="continue_to_option" style="width: 45%; float: left">Continue</button>
+                    <button class="btn btn-light btn-lg" id="retry_to_option" style="width: 45%; float: right">Redo</button>`)
                 };
 
                 // if (count ===3){alert("next page")}
@@ -430,7 +489,20 @@
                         alert("Please Choice Reason for your Choice")
                     }
                     else{
-                        upload_result(coordinate, selection)
+
+                        $.getJSON("http://jsonip.com?callback=?", function (response) {
+                            final_result.push([{'category_a': category_a, 'img_id_a_0' : img_id_a_0, 'img_id_a_1': img_id_a_1, 'category_b': category_b, 'img_id_b': img_id_b, 'category_c': category_b, 'img_id_c': img_id_b, 'decision': select_category, 'point0': coordinate[0], 'point1': coordinate[1], 'point2': coordinate[2], 'type0': selection[0], 'type1': selection[1], 'type2': selection[2], 'ip': response.ip}])
+                            $( "#continue_to_option" ).prop("disabled", true);
+
+                            if (select_category == 'a'){
+                                score += 20
+                            };
+
+                            if (progress_count == 20){
+                                upload_result(final_result)
+                            } 
+                            else{load_images();}
+                        });
                     };
                 });
 
@@ -450,28 +522,17 @@
             
         };
 
-        function upload_result(coordinate, selection){
-            $.getJSON("http://jsonip.com?callback=?", function (response) {
-                $.post('/results',  {'category_a': true_category, 'img_id_a_0' : original_img_path, 'img_id_a_1': true_img_path, 'category_b': false_category, 'img_id_b': false_img_path, 'decision': decision, 'point0': coordinate[0], 'point1': coordinate[1], 'point2': coordinate[2], 'type0': selection[0], 'type1': selection[1], 'type2': selection[2], 'ip': response.ip}).done(function(result){
-                    if (decision){
-                        score += 10
-                    }
-
-                    if (progress_count == 20){
-                        show_score();
-                    } 
-                    else{load_images();}
-                });
-                // $("#ip").text(response.ip);
-            });
-            
+        function upload_result(final_result){
+            console.log(JSON.stringify(final_result));
+            $.post('/results', {'data':  JSON.stringify(final_result)}).done(function(result){show_score(result);});
         }
 
-        function show_score(){
+        function show_score(survey_code){
             $("#top_sec").empty();
             $("#top_sec").append(`<h4 style="font-size: 15"><strong>Your Score is ...</strong></h4>`);
             $("#middle_sec").empty();
             $("#middle_sec").append(`<h1 class="final_score">${score}</h1>`)
+            $("#middle_sec").append(`<h3>survey code: ${survey_code}</h3>`)
         }
 
         $(document).ready(function () {

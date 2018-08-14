@@ -14,10 +14,10 @@ var errorHandler = require('errorhandler');
 var cookieParser = require('cookie-parser');
 var fs = require("fs");
 
-//var MongoStore = require('connect-mongo')(session);
-
 var pg = require('pg');
 var app = express();
+
+app.set('port', process.env.PORT || 3004);
 
 var config = {
 	user: 'postgres', //env var: PGUSER
@@ -69,21 +69,42 @@ app.use(express.static("./public"));
 //var mainFunction = require('./app/server/routes/mainFunction');
 //should be modulized later on 
 
+function makeid() {
+  var text = "";
+  var possible = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789";
 
-function getDateTime() {
-    var date = new Date();
-    var hour = date.getHours();
-    hour = (hour < 10 ? "0" : "") + hour;
-    var min  = date.getMinutes();
-    min = (min < 10 ? "0" : "") + min;
-    var sec  = date.getSeconds();
-    sec = (sec < 10 ? "0" : "") + sec;
-    var year = date.getFullYear();
-    var month = date.getMonth() + 1;
-    month = (month < 10 ? "0" : "") + month;
-    var day  = date.getDate();
-    day = (day < 10 ? "0" : "") + day;
-    return year + ":" + month + ":" + day + ":" + hour + ":" + min + ":" + sec;
+  for (var i = 0; i < 6; i++)
+    text += possible.charAt(Math.floor(Math.random() * possible.length));
+
+  return text;
+}
+
+function writeIntoDB(parsed_data, i, survey_code, res){
+	var category_a    = parsed_data[i][0].category_a;
+	var img_id_a_0    = parsed_data[i][0].img_id_a_0;
+	var img_id_a_1 = parsed_data[i][0].img_id_a_1;
+	var category_b   = parsed_data[i][0].category_b;
+	var img_id_b    = parsed_data[i][0].img_id_b
+	var category_c   = parsed_data[i][0].category_c;
+	var img_id_c    = parsed_data[i][0].img_id_c
+	var decision   = parsed_data[i][0].decision
+	var point0   = parsed_data[i][0].point0
+	var point1   = parsed_data[i][0].point1
+	var point2   = parsed_data[i][0].point2
+	var type0   = parsed_data[i][0].type0
+	var type1   = parsed_data[i][0].type1
+	var type2   = parsed_data[i][0].type2
+	var ip      = parsed_data[i][0].ip
+
+	query = `insert into gare_st_lazare.survey values('${category_a}', '${img_id_a_0}', '${img_id_a_1}', '${category_b}', '${img_id_b}', '${category_c}', '${img_id_c}', '${decision}', '${point0}', '${point1}', '${point2}', '${type0}', '${type1}', '${type2}', '${ip}', now(), '${survey_code}')`
+
+	pool.query(query, function(err, result2){
+		if (i == 4){
+			res.write(survey_code);
+			res.end()
+		}
+		else{writeIntoDB(parsed_data, i + 1, survey_code, res)}
+	})
 }
 
 app.use(function(req, res, next) {
@@ -133,22 +154,21 @@ app.get('/getImages', function(req, res){
 	query = `select count(*) from gare_st_lazare.survey`
 	pool.query(query, function(err, result1){
 		var count = result1.rows[0]['count']
-		query = `select * from gare_st_lazare.survey_test_set order by random() limit 1`;
+		query = `select * from gare_st_lazare.survey_test_set_2 order by random() limit 1`;
+	    console.log(query)
 	    pool.query(query, function(err, result2){
 	    	console.log(result2.rows[0])
-			res.end(JSON.stringify({"original_img_path": result2.rows[0]['img_id_a_0'], "false_img_path": result2.rows[0]['img_id_b'], "true_img_path": result2.rows[0]['img_id_a_1'], "true_category": result2.rows[0]['category_a'], "false_category": result2.rows[0]['category_b'], "count": count}))
+			res.end(JSON.stringify({"img_id_a_0": result2.rows[0]['img_id_a_0'], "img_id_b": result2.rows[0]['img_id_b'], "img_id_c": result2.rows[0]['img_id_c'],"img_id_a_1": result2.rows[0]['img_id_a_1'], "category_a": result2.rows[0]['category_a'], "category_b": result2.rows[0]['category_b'], "category_c": result2.rows[0]['category_c'], "count": count}))
 	    })
 	})
 	
 })
-
 
 app.post('/getBinary', function(req, res){
 	zone_id = req.body.zone;
 	query = `select path from gare_st_lazare.images where category = '` + zone_id + `' order by random() limit 1`;
 	console.log(query)
 	pool.query(query, function(err, result1){
-		// console.log("11111", result1)
 		original_img = result1.rows[0].path;
 		query = `select path, category from gare_st_lazare.images where category <> '` + zone_id + `' order by random() limit 1`;
 		pool.query(query, function(err, result2){
@@ -168,29 +188,11 @@ app.post('/getBinary', function(req, res){
 })
 
 app.post('/results', function(req, res){
-	var category_a    = req.body.category_a;
-	var img_id_a_0    = req.body.img_id_a_0;
-	var img_id_a_1 = req.body.img_id_a_1;
-	var category_b   = req.body.category_b;
-	var img_id_b    = req.body.img_id_b
-	var decision   = req.body.decision
-	var point0   = req.body.point0
-	var point1   = req.body.point1
-	var point2   = req.body.point2
-	var type0   = req.body.type0
-	var type1   = req.body.type1
-	var type2   = req.body.type2
-	var ip      = req.body.ip
-	var current_time = getDateTime()
 
-// {'category_a': true_category, 'img_id_a_0' : original_img_path, 'img_id_a_1': true_img_path, 'category_b': false_category, 'img_id_b' false_img_path, 'decision': , decision, 'point0': coordinate[0], 'point1': coordinate[1], 'point2': coordinate[2], 'type0': selection[0], 'type1': selection[1], 'type2': selection[2]}
-
-	query = `insert into gare_st_lazare.survey values('${category_a}', '${img_id_a_0}', '${img_id_a_1}', '${category_b}', '${img_id_b}', ${decision}, '${point0}', '${point1}', '${point2}', '${type0}', '${type1}', '${type2}', '${ip}', '${current_time}')`
-	console.log(query)
-	pool.query(query, function(err, result2){
-		res.write('success!');
-		res.end()
-	})
+	var parsed_data = JSON.parse(req.body.data);
+	console.log(parsed_data)
+	var survey_code = makeid()
+	writeIntoDB(parsed_data, 0, survey_code, res)
 	// res.write(response.statusCode.toString());
 })
 
@@ -246,9 +248,9 @@ app.post('/receiveResult', function(req, res){
 
 
 //listening port
-// http.createServer(app).listen(app.get('port'), function(){
-// 	console.log('Express server listening on port ' + app.get('port'));
-// });
+ http.createServer(app).listen(app.get('port'), function(){
+	console.log('Express server listening on port ' + app.get('port'));
+ });
 
-app.listen(8001);
+
 console.log('listening');
